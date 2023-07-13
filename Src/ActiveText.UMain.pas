@@ -3,7 +3,7 @@
  * v. 2.0. If a copy of the MPL was not distributed with this file, You can
  * obtain one at https://mozilla.org/MPL/2.0/
  *
- * Copyright (C) 2008-2021, Peter Johnson (gravatar.com/delphidabbler).
+ * Copyright (C) 2008-2023, Peter Johnson (gravatar.com/delphidabbler).
  *
  * Provides interfaces, a factory class and implementation of "active text".
  * Active text is text that can have actions performed on it. Actions may
@@ -120,14 +120,19 @@ type
 type
   ///  <summary>Supported types of active text action elements.</summary>
   TActiveTextActionElemKind = (
-    ekLink,         // link element: has a URL (inline)
-    ekStrong,       // text formatted as strong (inline)
-    ekEm,           // text formatted as emphasised (inline)
-    ekVar,          // text formatted as variable (inline)
-    ekPara,         // delimits a paragraph (block level)
-    ekWarning,      // text formatted as a warning (inline)
-    ekHeading,      // delimits a heading (block level)
-    ekMono          // text formatted as mono spaced (inline)
+    ekLink,           // link element: has a URL (inline)
+    ekStrong,         // text formatted as strong (inline)
+    ekEm,             // text formatted as emphasised (inline)
+    ekVar,            // text formatted as variable (inline)
+    ekPara,           // delimits a paragraph (block)
+    ekWarning,        // text formatted as a warning (inline)
+    ekHeading,        // delimits a heading (block level)
+    ekMono,           // text formatted as mono spaced (inline)
+    ekUnorderedList,  // container for unordered lists (block)
+    ekOrderedList,    // container for ordered list (block)
+    ekListItem,       // list item (block)
+    ekBlock,          // container for unexpected text outside block (block)
+    ekDocument        // contains whole document (block)
   );
 
 type
@@ -157,12 +162,6 @@ type
     function GetAttrs: IActiveTextAttrs;
     ///  <summary>Object describing element's attributes.</summary>
     property Attrs: IActiveTextAttrs read GetAttrs;
-    ///  <summary>Returns value that indicates whether element is an inline or
-    ///  block element.</summary>
-    function GetDisplayStyle: TActiveTextDisplayStyle;
-    ///  <summary>Indicates whether element displays inline or as a block.
-    ///  </summary>
-    property DisplayStyle: TActiveTextDisplayStyle read GetDisplayStyle;
   end;
 
 type
@@ -178,15 +177,32 @@ type
     ///  <summary>Appends elements from another given active text object to the
     ///  current object.</summary>
     procedure Append(const ActiveText: IActiveText);
+    ///  <summary>Returns a new IActiveText instance containing just the first
+    ///  block of the current object.</summary>
+    ///  <remarks>
+    ///  <para>The first block is the content of the block level tag that starts
+    ///  the active text. If this block has child blocks (for e.g. an unordered
+    ///  list) then they are included.</para>
+    ///  <para>If the current object is empty then an empty object is returned.
+    ///  </para>
+    ///  </remarks>
+    function FirstBlock: IActiveText;
     ///  <summary>Checks if the active text object contains any elements.
     ///  </summary>
     function IsEmpty: Boolean;
+    ///  <summary>Checks if the active text object has text content.</summary>
+    function HasContent: Boolean;
     ///  <summary>Checks if the active text object contains only plain text.
     ///  </summary>
     ///  <remarks>Plain text is considered to be active text with no action
-    ///  elements except for "para". This can rendered in plain text with no
-    ///  loss of formatting.</remarks>
+    ///  elements except for "document" or "block". This can rendered in plain
+    ///  text with no loss of formatting.</remarks>
     function IsPlainText: Boolean;
+    ///  <summary>Checks if the active text object is a valid active text
+    ///  document.</summary>
+    ///  <remarks>A valid document is either empty or it is surrounded by
+    ///  matching ekDocument elements.</remarks>
+    function IsValidActiveTextDocument: Boolean;
     ///  <summary>Returns element at given index in active text object's element
     ///  list.</summary>
     function GetElem(Idx: Integer): IActiveTextElem;
@@ -273,6 +289,158 @@ type
       IActiveTextAttrs; overload;
   end;
 
+type
+  ///  <summary>Provides information about the capabilities of each supported
+  ///  active text element.</summary>
+  TActiveTextElemCaps = record
+  strict private
+    type
+      ///  <summary>Fields used to define an active text element's capabilities.
+      ///  </summary>
+      TCaps = record
+      public
+        var
+          ///  <summary>Determines how element is to be displayed.</summary>
+          DisplayStyle: TActiveTextDisplayStyle;
+          ///  <summary>Specifies whether plain text can be contained within the
+          ///  element.</summary>
+          PermitsText: Boolean;
+          ///  <summary>Specifies the elements that are permitted as child
+          ///  elements of this element.
+          PermittedChildElems: TActiveTextActionElemKinds;
+      end;
+    const
+      ///  <summary>Set of block level elements.</summary>
+      BlockElems = [
+        ekPara, ekHeading, ekUnorderedList, ekOrderedList, ekListItem,
+        ekBlock, ekDocument
+      ];
+      ///  <summary>Set of block level elements that can directly contain text
+      ///  and inline elements.</summary>
+      TextContentBlocks = [
+        ekPara, ekHeading, ekBlock
+      ];
+      ///  <summary>Set of block level elements that can contain only blocks
+      ///  that are not container blocks.</summary>
+      ContainerBlocks = [
+        ekDocument, ekListItem
+      ];
+      ///  <summary>Set of inline elements.</summary>
+      InlineElems = [
+        ekLink, ekStrong, ekEm, ekVar, ekWarning, ekMono
+      ];
+      ///  <summary>Set of all elements.</summary>
+      AllElems = BlockElems + InlineElems;
+      ///  <summary>Map of all elements to their capabilities.</summary>
+      Map: array[TActiveTextActionElemKind] of TCaps =
+        (
+          (
+            // ekLink
+            //   may contain any inline elements but no block elements
+            DisplayStyle: dsInline;
+            PermitsText: True;
+            PermittedChildElems: InlineElems - [ekLink];
+          ),
+          (
+            // ekStrong
+            //   may contain any inline elements but no block elements
+            DisplayStyle: dsInline;
+            PermitsText: True;
+            PermittedChildElems: InlineElems;
+          ),
+          (
+            // ekEm
+            //   may contain any inline elements but no block elements
+            DisplayStyle: dsInline;
+            PermitsText: True;
+            PermittedChildElems: InlineElems;
+          ),
+          (
+            // ekVar
+            //   may contain any inline elements but no block elements
+            DisplayStyle: dsInline;
+            PermitsText: True;
+            PermittedChildElems: InlineElems;
+          ),
+          (
+            // ekPara
+            //   may contain any inline elements but no block elements
+            DisplayStyle: dsBlock;
+            PermitsText: True;
+            PermittedChildElems: InlineElems;
+          ),
+          (
+            // ekWarning
+            //   may contain any inline elements but no block elements
+            DisplayStyle: dsInline;
+            PermitsText: True;
+            PermittedChildElems: InlineElems;
+          ),
+          (
+            // ekHeading
+            //   may contain any inline elements but no block elements
+            DisplayStyle: dsBlock;
+            PermitsText: True;
+            PermittedChildElems: InlineElems;
+          ),
+          (
+            // ekMono
+            //   may contain any inline elements but no block elements
+            DisplayStyle: dsInline;
+            PermitsText: True;
+            PermittedChildElems: InlineElems;
+          ),
+          (
+            // ekUnorderedList
+            //   may contain only list item elements
+            DisplayStyle: dsBlock;
+            PermitsText: False;
+            PermittedChildElems: [ekListItem];
+          ),
+          (
+            // ekOrderedList
+            //   may contain only list item elements
+            DisplayStyle: dsBlock;
+            PermitsText: False;
+            PermittedChildElems: [ekListItem];
+          ),
+          (
+            // ekListItem
+            //   may contain only block elements, but not itself or other
+            //   block containers
+            DisplayStyle: dsBlock;
+            PermitsText: False;
+            PermittedChildElems: BlockElems - ContainerBlocks;
+          ),
+          (
+            // ekBlock
+            //   may contain any inline elements but no block elements
+            DisplayStyle: dsBlock;
+            PermitsText: True;
+            PermittedChildElems: InlineElems;
+          ),
+          (
+            // ekDocument
+            //   may contain only block elements, but not itself or other
+            //   block containers
+            DisplayStyle: dsBlock;
+            PermitsText: False;
+            PermittedChildElems: BlockElems - ContainerBlocks;
+          )
+        );
+  public
+    ///  <summary>Returns the display type of the given element.</summary>
+    class function DisplayStyleOf(const Elem: TActiveTextActionElemKind):
+      TActiveTextDisplayStyle; static;
+    ///  <summary>Checks whether the given element can contain text.</summary>
+    class function CanContainText(const Elem: TActiveTextActionElemKind):
+      Boolean; static;
+    ///  <summary>Checks whether the given child element is permitted as a child
+    ///  of the given parent element.</summary>
+    class function IsPermittedChildElem(
+      const Parent, Child: TActiveTextActionElemKind): Boolean; static;
+  end;
+
 
 implementation
 
@@ -281,7 +449,10 @@ uses
   // Delphi
   SysUtils,
   // Project
-  IntfCommon;
+  IntfCommon,
+  UConsts,
+  UStrUtils,
+  UUtils;
 
 
 type
@@ -321,18 +492,40 @@ type
     ///  </summary>
     ///  <remarks>Method of IActiveText.</remarks>
     procedure Append(const ActiveText: IActiveText);
+    ///  <summary>Returns a new IActiveText instance containing just the first
+    ///  block of the current object.</summary>
+    ///  <remarks>
+    ///  <para>The first block is the content of the block level tag that starts
+    ///  the active text. If this block has child blocks (for e.g. an unordered
+    ///  list) then they are included.</para>
+    ///  <para>If the current object is empty then an empty object is returned.
+    ///  </para>
+    ///  <para>Method of IActiveText.</para>
+    ///  </remarks>
+    function FirstBlock: IActiveText;
     ///  <summary>Checks if the element list is empty.</summary>
     ///  <remarks>Method of IActiveText.</remarks>
     function IsEmpty: Boolean;
+    ///  <summary>Checks if the active text object has text content.</summary>
+    ///  <remarks>Method of IActiveText.</remarks>
+    function HasContent: Boolean;
     ///  <summary>Checks if the active text object contains only plain text.
     ///  </summary>
     ///  <remarks>
     ///  <para>Plain text is considered to be active text with no action
-    ///  elements except for "para". This can rendered in plain text with no
-    ///  loss of formatting.</para>
+    ///  elements except for "document" or "block". This can rendered in plain
+    ///  text with no loss of formatting.</para>
     ///  <para>Method of IActiveText.</para>
     ///  </remarks>
     function IsPlainText: Boolean;
+    ///  <summary>Checks if the active text object is a valid active text
+    ///  document.</summary>
+    ///  <remarks>
+    ///  <para>A valid document is either empty or it is surrounded by matching
+    ///  ekDocument elements.</para>
+    ///  <para>Method of IActiveText.</para>
+    ///  </remarks>
+    function IsValidActiveTextDocument: Boolean;
     ///  <summary>Returns element at given index in element list.</summary>
     ///  <remarks>Method of IActiveText.</remarks>
     function GetElem(Idx: Integer): IActiveTextElem;
@@ -354,7 +547,7 @@ type
     fText: string;
   public
     ///  <summary>Object constructor. Records given element text and sets
-    ///  required kind for a text element.</summary>
+    ///  required Elem for a text element.</summary>
     constructor Create(const Text: string);
     ///  <summary>Assigns properties of another object to this object.</summary>
     ///  <param name="Src">IInterface [in] Object whose properties are to be
@@ -375,7 +568,7 @@ type
     IActiveTextElem, IActiveTextActionElem, IAssignable, IClonable
   )
   strict private
-    ///  <summary>Kind of element encapsulated by this object.</summary>
+    ///  <summary>Elem of element encapsulated by this object.</summary>
     fKind: TActiveTextActionElemKind;
     ///  <summary>State of element: opening or closing.</summary>
     fState: TActiveTextElemState;
@@ -383,13 +576,14 @@ type
     fAttrs: IActiveTextAttrs;
   public
     ///  <summary>Object constructor. Creates an action element.</summary>
-    ///  <param name="Kind">TActiveTextElemKind [in] Required kind of element.
+    ///  <param name="AKind">TActiveTextElemKind [in] Required Elem of element.
     ///  </param>
-    ///  <param name="Attrs">IActiveTextAttrs [in] Element's attributes.</param>
-    ///  <param name="State">TActiveTextElemState [in] State of element: opening
-    ///  or closing.</param>
-    constructor Create(const Kind: TActiveTextActionElemKind;
-      Attrs: IActiveTextAttrs; const State: TActiveTextElemState);
+    ///  <param name="AAttrs">IActiveTextAttrs [in] Element's attributes.
+    ///  </param>
+    ///  <param name="AState">TActiveTextElemState [in] State of element:
+    ///  opening or closing.</param>
+    constructor Create(const AKind: TActiveTextActionElemKind;
+      AAttrs: IActiveTextAttrs; const AState: TActiveTextElemState);
     ///  <summary>Assigns properties of another object to this object.</summary>
     ///  <param name="Src">IInterface [in] Object whose properties are to be
     ///  assigned. Src must support IActiveTextActionElem.</param>
@@ -401,7 +595,7 @@ type
     ///  <summary>Returns a cloned instance of this object.</summary>
     ///  <remarks>Method of IClonable.</remarks>
     function Clone: IInterface;
-    ///  <summary>Returns kind of action represented by this element.</summary>
+    ///  <summary>Returns Elem of action represented by this element.</summary>
     ///  <remarks>Method of IActiveTextActionElem.</remarks>
     function GetKind: TActiveTextActionElemKind;
     ///  <summary>Returns state of element.</summary>
@@ -410,10 +604,6 @@ type
     ///  <summary>Returns object describing element's attributes.</summary>
     ///  <remarks>Method of IActiveTextActionElem.</remarks>
     function GetAttrs: IActiveTextAttrs;
-    ///  <summary>Returns value that indicates whether element is an inline or
-    ///  block element.</summary>
-    ///  <remarks>Method of IActiveTextActionElem.</remarks>
-    function GetDisplayStyle: TActiveTextDisplayStyle;
   end;
 
 type
@@ -531,15 +721,43 @@ begin
 end;
 
 procedure TActiveText.Append(const ActiveText: IActiveText);
+
+  function IsDocumentElem(Elem: IActiveTextElem): Boolean;
+  var
+    ActiveElem: IActiveTextActionElem;
+  begin
+    if not Supports(Elem, IActiveTextActionElem, ActiveElem) then
+      Exit(False);
+    Result := ActiveElem.Kind = ekDocument;
+  end;
+
 var
   Elem: IActiveTextElem;  // references each element in elems
-  NewElem: IActiveTextElem;
+  SelfCopy: IActiveText;  // temporary copy of this object
 begin
+  // *** Don't call Clone or Assign here: they call backinto this method.
+
+  // Make a copy of elements of self
+  SelfCopy := TActiveText.Create;
+  for Elem in fElems do
+    SelfCopy.AddElem((Elem as IClonable).Clone as IActiveTextElem);
+
+  // Clear own elems and add document start element
+  fElems.Clear;
+  AddElem(TActiveTextFactory.CreateActionElem(ekDocument, fsOpen));
+
+  // Copy own elements back to fElems, skipping ekDocument elems
+  for Elem in SelfCopy do
+    if not IsDocumentElem(Elem) then
+      AddElem((Elem as IClonable).Clone as IActiveTextElem);
+
+  // Copy active text to be assigned, skipping its ekDocument elems
   for Elem in ActiveText do
-  begin
-    NewElem := (Elem as IClonable).Clone as IActiveTextElem;
-    AddElem(NewElem);
-  end;
+    if not IsDocumentElem(Elem) then
+      AddElem((Elem as IClonable).Clone as IActiveTextElem);
+
+  // Add closing ekDocument Elem
+  AddElem(TActiveTextFactory.CreateActionElem(ekDocument, fsClose));
 end;
 
 procedure TActiveText.Assign(const Src: IInterface);
@@ -569,6 +787,78 @@ begin
   inherited;
 end;
 
+function TActiveText.FirstBlock: IActiveText;
+var
+  Elem: IActiveTextElem;
+  ActionElem: IActiveTextActionElem;
+  Block: IActiveTextActionElem;
+  Idx: Integer;
+  EndOfBlockFound: Boolean;
+  HasDocElems: Boolean;
+  FirstBlockIdx: Integer;
+begin
+  Result := TActiveText.Create;
+  if IsEmpty then
+    Exit;
+
+  HasDocElems := IsValidActiveTextDocument;
+  if HasDocElems then
+  begin
+    // We have ekDocument elements wrapping document: 1st true blue should be
+    // next element
+    if GetCount < 4 then
+      Exit;
+    FirstBlockIdx := 1;
+  end
+  else
+  begin
+    // No ekDocument elements: 1st true block is should be first element
+    if GetCount < 2 then
+      Exit;
+    FirstBlockIdx := 0;
+  end;
+
+  // Element at FirstBlockIdx must be a valid block opening element
+  Elem := GetElem(FirstBlockIdx);
+  GetIntf(Elem, IActiveTextElem, Block);
+  if not Assigned(Block)
+    or (TActiveTextElemCaps.DisplayStyleOf(Block.Kind) <> dsBlock)
+    or (Block.State <> fsOpen) then
+    raise EBug.Create(
+      ClassName + '.FirstBlock: block opener expected after ekDocument element'
+    );
+
+  // We have required block: add document opener element and block element
+  Result.AddElem(TActiveTextFactory.CreateActionElem(ekDocument, fsOpen));
+  Result.AddElem(Elem);
+
+  // Scan through remaining elements, copying them to output as we go. Halt when
+  // (or if) matching closing block found.
+  EndOfBlockFound := False;
+  Idx := Succ(FirstBlockIdx);
+  while Idx < Pred(GetCount) do
+  begin
+    Elem := GetElem(Idx);
+    Result.AddElem(Elem);
+    if Supports(Elem, IActiveTextActionElem, ActionElem)
+      and (ActionElem.Kind = Block.Kind)
+      and (ActionElem.State = fsClose) then
+    begin
+      EndOfBlockFound := True;
+      Break;
+    end;
+    Inc(Idx);
+  end;
+  // No closing block found
+  if not EndOfBlockFound then
+    raise EBug.Create(
+      ClassName + '.FirstBlock: Matching closer for first block not found'
+    );
+
+  // Add document close elem (closing block elem added in loop above)
+  Result.AddElem(TActiveTextFactory.CreateActionElem(ekDocument, fsClose));
+end;
+
 function TActiveText.GetCount: Integer;
 begin
   Result := fElems.Count;
@@ -584,6 +874,18 @@ begin
   Result := fElems.GetEnumerator;
 end;
 
+function TActiveText.HasContent: Boolean;
+var
+  Elem: IActiveTextElem;
+  TextElem: IActiveTextTextElem;
+begin
+  Result := False;
+  for Elem in fElems do
+    if Supports(Elem, IActiveTextTextElem, TextElem)
+      and (TextElem.Text <> '') then
+      Exit(True);
+end;
+
 function TActiveText.IsEmpty: Boolean;
 begin
   Result := fElems.Count = 0;
@@ -597,10 +899,23 @@ begin
   for Elem in fElems do
   begin
     if Supports(Elem, IActiveTextActionElem, ActionElem)
-      and (ActionElem.Kind <> ekPara) then
+      and not (ActionElem.Kind in [ekBlock, ekDocument]) then
       Exit(False);
   end;
   Result := True;
+end;
+
+function TActiveText.IsValidActiveTextDocument: Boolean;
+var
+  DocStartElem, DocEndElem: IActiveTextActionElem;
+begin
+  if IsEmpty then
+    Exit(True);
+  Result := (GetCount >= 2)
+    and Supports(fElems[0], IActiveTextActionElem, DocStartElem)
+    and (DocStartElem.Kind = ekDocument) and (DocStartElem.State = fsOpen)
+    and Supports(fElems[Pred(GetCount)], IActiveTextActionElem, DocEndElem)
+    and (DocEndElem.Kind = ekDocument) and (DocEndElem.State = fsClose);
 end;
 
 function TActiveText.ToString: string;
@@ -617,13 +932,13 @@ begin
       if Supports(Elem, IActiveTextTextElem, TextElem) then
         SB.Append(TextElem.Text);
       if Supports(Elem, IActiveTextActionElem, ActionElem)
-        and (ActionElem.DisplayStyle = dsBlock)
+        and (TActiveTextElemCaps.DisplayStyleOf(ActionElem.Kind) = dsBlock)
         and (ActionElem.State = fsClose) then
         // new line at end of block to separate text at end of closing block
         // from text at start of following block
         SB.AppendLine;
     end;
-    Result := SB.ToString;
+    Result := StrTrimRight(SB.ToString) + EOL;  // ensure single final EOL(s)
   finally
     SB.Free;
   end;
@@ -674,26 +989,18 @@ begin
   Result := TActiveTextActionElem.Create(GetKind, Attrs, GetState);
 end;
 
-constructor TActiveTextActionElem.Create(const Kind: TActiveTextActionElemKind;
-  Attrs: IActiveTextAttrs; const State: TActiveTextElemState);
+constructor TActiveTextActionElem.Create(const AKind: TActiveTextActionElemKind;
+  AAttrs: IActiveTextAttrs; const AState: TActiveTextElemState);
 begin
   inherited Create;
-  fAttrs := Attrs;
-  fState := State;
-  fKind := Kind;
+  fAttrs := AAttrs;
+  fState := AState;
+  fKind := AKind;
 end;
 
 function TActiveTextActionElem.GetAttrs: IActiveTextAttrs;
 begin
   Result := fAttrs;
-end;
-
-function TActiveTextActionElem.GetDisplayStyle: TActiveTextDisplayStyle;
-begin
-  if GetKind in [ekPara, ekHeading] then
-    Result := dsBlock
-  else
-    Result := dsInline;
 end;
 
 function TActiveTextActionElem.GetKind: TActiveTextActionElemKind;
@@ -753,6 +1060,26 @@ end;
 function TActiveTextAttrs.GetEnumerator: TEnumerator<TPair<string, string>>;
 begin
   Result := fMap.GetEnumerator;
+end;
+
+{ TActiveTextElemCapsMap }
+
+class function TActiveTextElemCaps.CanContainText(
+  const Elem: TActiveTextActionElemKind): Boolean;
+begin
+  Result := Map[Elem].PermitsText;
+end;
+
+class function TActiveTextElemCaps.DisplayStyleOf(
+  const Elem: TActiveTextActionElemKind): TActiveTextDisplayStyle;
+begin
+  Result := Map[Elem].DisplayStyle;
+end;
+
+class function TActiveTextElemCaps.IsPermittedChildElem(
+  const Parent, Child: TActiveTextActionElemKind): Boolean;
+begin
+  Result := Child in Map[Parent].PermittedChildElems;
 end;
 
 end.

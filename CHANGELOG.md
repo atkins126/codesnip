@@ -1,14 +1,76 @@
 # Changelog
 
-This is the change log for _DelphiDabbler CodeSnip_.
+This is the change log for _DelphiDabbler CodeSnip_. It begins with the first ever pre-release version of _CodeSnip_.
 
-All notable changes to this project are documented in this file.
-
-This change log begins with the first ever pre-release version of _CodeSnip_. Releases are listed in reverse version number order.
+Releases are listed in reverse version number order.
 
 > Note that _CodeSnip_ v4 was developed in parallel with v3 for a while. As a consequence some v3 releases have later release dates than early v4 releases.
 
-From v4.1.0 the version numbering has attempted to adhere to the principles of [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## Release v4.21.2 of 13 July 2023
+
+* Removed broken links and fixed unsafe links in the About box [issue #105].
+* Fixed bug in version information files that resulted in an error in the Comments section of the version information of both editions of _CodeSnip_ [issue 106].
+* Fixed potential XSS vulnerability in JQuery code used in Easter egg [issue #107].
+* Documentation changes:
+  * Rationalised, corrected, updated and clarified licensing information. These changes affected many documentation files. [issue #108].
+  * Overhauled `README.md` and `Docs/ReadMe.txt` and created a new `CONTRIBUTING.md` file that explains how to contribute in detail [issue #104].
+
+## Release v4.21.1 of 09 April 2023
+
+* Completed implementation of support for [REML version 5](https://htmlpreview.github.io/?https://github.com/delphidabbler/codesnip/blob/version-4.21.0/Docs/Design/reml.html) (ommitted from v4.20.0 in error) and fixed some bugs in the original implementation [issues #81 and #82], including:
+  * Heavily revised "active text" handling code and document model to fix support for lists introduced in v4.21.0.
+  * Added support for rendering lists in plain text reports and generated source code header comments.
+  * Added support for rendering lists in Rich Text Format for use in printed information and in reports copied to the clipboard.
+  * Overhauled HTML rendering code that generates HTML for display in the UI.
+  * Heavily revised parsing and generation of REML code.
+  * Updated "active text" validation code.
+* Prevented snippets editor from stripping REML `<p>` tags [issue #103].
+* Fixed garbled copyright symbols in generated source code [issue #80].
+* Fixed bug in code that compresses multiple white space into a single space [issue #95].
+* Fixed out of range error in code that handles text encodings [issue #97].
+* Fixed broken formatting of compiler result tables in text and rich text snippet reports & print outs [issue #101].
+* Updated copyright date displayed in about box [issue #98].
+* Updated operating system detection code to detect Windows 10/11 builds released in December 2022 and Q1 2023.
+* Some refactoring [including issue #83] 
+* Changed build process to create all files in `_build` directory and to use different zip file names [issue #78].
+* Documentation changes:
+  * Updated `Build.html` to document changes in build process.
+  * Updated `CHANGELOG.md` to fix broken link [issue #76] and to remove information about semantic versioning.
+  * Removed broken links in `Docs/License.html`.
+  * Updated copyright date in various license files [including issue #96].
+  * Fixed errors and oversights in REML documentation.
+* Removed some redundant tests that were failing due to passing invalid parameters to the revised _StrWrap_ routine [issue #79].
+
+## Release v4.21.0 of 16 December 2022
+
+* Updated to support [REML version 5](https://htmlpreview.github.io/?https://github.com/delphidabbler/codesnip/blob/version-4.21.0/Docs/Design/reml.html) in snippet description & extra information [issue #71]:
+  * Numerous new character entities supported. 
+  * New list tags: `<ol>`, `<ul>` & `<li>`.
+* Program now automatically detects new (supported) Delphi installations at startup and offers to register the compiler(s) to be used for test compiling snippets. This feature is on by default but can be turned off completely or for specifically excluded compilers [issue #19].
+* Modified Configure Compilers dialogue box:
+  * Added facility to customise automatic compiler detection on per-compiler or global basis.
+  * Changed manually triggered compiler detection to ignore excluded compilers.
+* Some refactoring [including issues #73 and #75].
+* Minor changes to program license
+  * Changed required image attribution in `Docs/License.html` [issue #63]
+  * Corrected copyright date & fix typo in licenses displayed by installer and help file [issue #65 & PR #72].
+* Bump per-user config file to version 19.
+* Documentation updates:
+  * Updated `README.md` re abandoned and new Git repo branches.
+  * Updated config file, database, export file & REML documentation re changes in this release [including issue #74].
+  * Help file updated with details of changes in this release.
+  * Updated development tool chain requirements in `Build.html`. 
+
+## Release v4.20.2 of 04 November 2022
+
+* Fixes bug where an exception was raised when selecting a main menu item with the cursor keys then pressing F1. [issue 54]
+* Update operating system detection code to correctly detect Version 22H2 of Windows 10 & Windows 11 plus some other Windows releases on the Dev, Beta & Release channels. [issues 55, 61 & 62]
+* Fix appearance of copyright symbol in version information.
+
+## Release v4.20.1 of 01 July 2022
+
+* Operating system detection code was updated to (a) fix bugs and (b) detect some Dev, Beta and Release Preview builds of Windows 11 22H2.
+* Fixed copyright date in `Docs/License.html`.
 
 ## Release v4.20.0 of 15 May 2022
 

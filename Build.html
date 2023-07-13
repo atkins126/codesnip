@@ -6,7 +6,7 @@
  * v. 2.0. If a copy of the MPL was not distributed with this file, You can
  * obtain one at https://mozilla.org/MPL/2.0/
  *
- * Copyright (C) 2009-2021, Peter Johnson (gravatar.com/delphidabbler).
+ * Copyright (C) 2009-2023, Peter Johnson (gravatar.com/delphidabbler).
  *
  * Instructions for building CodeSnip from source.
 -->
@@ -20,6 +20,9 @@
   <style type="text/css">
     body {
       font-family: sans-serif;
+    }
+    code, pre {
+      font-size: 1rem;
     }
     dt.spaced {
       margin-top: 0.5em;
@@ -157,7 +160,7 @@
   </dt>
   <dd>
     Type library importer tool. Used to create a Pascal unit that describes
-    code contained in <code>ExternalObj.idl</code>.
+    code contained in <code>ExternalObj.ridl</code>.
   </dd>
 </dl>
 
@@ -191,10 +194,10 @@
 </h3>
 
 <p>
-  This tool is used to compile version information (<code>.vi</code>) files
-  into intermediate resource source (<code>.rc</code>) files. Version 2.11.2
-  or later is required.
-  Version Information Editor can be obtained from
+  This tool is used to compile version information (<code>.vi</code>) files and
+  any associated macro file(s) into intermediate resource source
+  (<code>.rc</code>) files. Version 2.15.0 or later is required. Version
+  Information Editor can be obtained from
   <a
     href="https://github.com/delphidabbler/vied/releases"
   >https://github.com/delphidabbler/vied/releases</a>.
@@ -376,30 +379,34 @@
 </h3>
 
 <p>
-  The source code is maintained in the <code><a href="https://github.com/delphidabbler/codesnip">delphidabbler/codesnip</a></code> Git respository on GitHub.
+  The source code is maintained in the <code><a href="https://github.com/delphidabbler/codesnip">delphidabbler/codesnip</a></code> Git respository on GitHub. Source code can be obtained in three ways:
 </p>
 
-<p>
-  If you are intending to contribute code to the project you need to:
-</p>
-
-<ol class="spaced">
+<ol>
   <li>
-    Fork the project on GitHub.
+    <p>
+      Fork the project from GitHub and then clone your forked repository.
+    </p>
   </li>
   <li>
-    Create a new branch off the <code>development</code> branch.
+    <p>
+      Clone the existing repository using:
+    </p>
+    <pre class="cmd"><span class="prompt">&gt;</span> git clone https://github.com/delphidabbler/codesnip.git</pre>
   </li>
   <li>
-    Make your changes on the branch you created.
-  </li>
-  <li>
-    Once finished raise a pull request for your code on the <code>delphidabbler/codesnip</code> repo.
+    <p>
+      Download the source of a specific release from the project's <a href="https://github.com/delphidabbler/codesnip/releases">Releases</a> section on GitHub &ndash; just choose the version you want.
+    </p>
   </li>
 </ol>
 
 <p>
-  If you only intend to use the code for your own purposes you can still fork the repository as above. Alternatively you can download the source code from the project's <a href="https://github.com/delphidabbler/codesnip/releases">Releases</a> section on GitHub &ndash; just choose the version you want.
+  If you are intending to contribute code to the project please read the most up to date version of the project's <a href="https://github.com/delphidabbler/codesnip/blob/develop/README.md">read-me file</a> before doing so.
+</p>
+
+<p class="note">
+  <strong>Important:</strong> If you are planning to fork <em>CodeSnip</em> and to develop and release your own application derived from the CodeSnip code base then some changes to the code are required under the terms of the <em>CodeSnip</em> license. See the <a href="#conditions">Conditions For Release of Modified Code</a> section below for details.
 </p>
 
 <h3>
@@ -412,56 +419,57 @@
 
 <pre>./
   |
-  +-- Docs                  - documentation
+  +-- Docs                    - documentation
   |   |
-  |   +-- Design            - documents concerning program design
+  |   +-- Design              - documents concerning program design
   |      |
-  |      +-- FileFormats    - documentation of CodeSnip's file formats
+  |      +-- FileFormats      - documentation of CodeSnip's file formats
   |
-  +-- Src                   - main CodeSnip source code
+  +-- Src                     - main CodeSnip source code
   |   |
-  |   +-- 3rdParty          - third party &amp; DelphiDabbler library source code
+  |   +-- 3rdParty            - third party &amp; DelphiDabbler library source code
   |   |
-  |   +-- AutoGen           - receives automatically generated code
+  |   +-- AutoGen             - receives automatically generated code
   |   |
-  |   +-- Help              - help source files
+  |   +-- Help                - help source files
   |   |   |
-  |   |   +-- CSS           - CSS code for help files
+  |   |   +-- CSS             - CSS code for help files
   |   |   |
-  |   |   +-- HTML          - HTML files included in help file
+  |   |   +-- HTML            - HTML files included in help file
   |   |   |
-  |   |   +-- Images        - images included in help file
+  |   |   +-- Images          - images included in help file
   |   |
-  |   +-- Install           - setup script and support code
+  |   +-- Install             - setup script and support code
   |   |   |
-  |   |   +-- Assets        - files required for inclusion in install program
+  |   |   +-- Assets          - files required for inclusion in install program
   |   |
-  |   +-- Res               - container for files that are embedded in resources
+  |   +-- Res                 - container for files that are embedded in resources
   |       |
-  |       +-- CSS           - CSS files
+  |       +-- CSS             - CSS files
   |       |
-  |       +-- HTML          - HTML files
+  |       +-- HTML            - HTML files
   |       |
-  |       +-- Img           - image files
+  |       +-- Img             - image files
   |       |   |
-  |       |   +-- Branding  - image files used for CodeSnip branding
+  |       |   +-- AltBranding - image files used for 3rd party branding
   |       |   |
-  |       |   +-- Egg       - image files for 'Easter Egg'
+  |       |   +-- Branding    - image files used for CodeSnip branding only
+  |       |   |
+  |       |   +-- Egg         - image files for 'Easter Egg'
   |       |
-  |       +-- Misc          - other resources
+  |       +-- Misc            - other resources
   |       |
-  |       +-- Scripts       - scripting files
+  |       +-- Scripts         - scripting files
   |           |
-  |           +-- 3rdParty  - 3rd party scripting files
+  |           +-- 3rdParty    - 3rd party scripting files
   |
-  +-- Tests                 - contains test code
+  +-- Tests                   - contains test code
       |
-      +-- Src               - test source code
+      +-- Src                 - test source code
           |
-          +-- DUnit         - test source code that uses the DUnit framework</pre>
+          +-- DUnit           - test source code that uses the DUnit framework</pre>
 <p>
-  If, by chance you also have <code>Bin</code>, <code>Exe</code> and / or
-  <code>Release</code> directories don't worry - all will become clear.
+  If, by chance you also have a <code>_build</code> directory don't worry - all will become clear.
   Git users may also see the usual <code>.git</code> hidden
   directory. If you have done some editing in the Delphi IDE you may also see
   occasional hidden <code>__history</code> folders.
@@ -498,18 +506,18 @@
 
 <pre>./
   |
-  +-- Bin                   - receives object files for CodeSnip
-  |
-  ...
-  |
-  +-- Exe                   - receives executable code and compiled help file
-  |
-  +-- Release               - receives release files
+  +-- _build                  - contains all the build files
+  |   |
+  |   +-- bin                 - receives object files for CodeSnip
+  |   |
+  |   +-- exe                 - receives executable code and compiled help file
+  |   |
+  |   +-- release             - receives release files
   |
   ...</pre>
 
 <p>
-  If the <code>Bin</code> folder already existed, it will have been emptied.
+  If the <code>_build/bin</code> folder already existed, it will have been emptied.
   In addition, <code>Make</code> will have created a <code>.cfg</code> file from
   template in the <code>Src</code> folder. This <code>.cfg</code> file is needed
   for DCC32 to run correctly. The file will be ignored by Git.
@@ -625,7 +633,7 @@
 
 <p>
   The <em>CodeSnip</em> executable, named <code>CodeSnip.exe</code> will be
-  placed in the <code>Exe</code> folder.
+  placed in the <code>_build\exe</code> folder.
 </p>
 
 <h4>
@@ -640,7 +648,7 @@
 <pre class="cmd"><span class="prompt">&gt;</span> Make -DPORTABLE codesnip</pre>
 
 <p>
-  Again the executable is placed in the <code>Exe</code> folder, but this time
+  Again the executable is placed in the <code>_build/exe</code> folder, but this time
   it is named <code>CodeSnip-p.exe</code>
 </p>
 
@@ -654,13 +662,16 @@
 
 <pre class="cmd"><span class="prompt">&gt;</span> Make help</pre>
 
+<p>
+  The compiled help file will be written to the <code>_build\exe</code> folder.
+</p>
 <h3>
   Build the Setup Program
 </h3>
 
 <p>
   The setup program requires that the <em>CodeSnip</em> excutable and the
-  compiled help file are already present in the <code>Exe</code> directory.
+  compiled help file are already present in the <code>_build\exe</code> directory.
 </p>
 
 <p>
@@ -679,7 +690,7 @@
 <p>
   The setup program is named <code>CodeSnip-Setup-x.x.x.exe</code>, where
   x.x.x is the version number extracted from <em>CodeSnip</em>'s version
-  information. It is placed in the <code>Exe</code> directory.
+  information. It is placed in the <code>_build/exe</code> directory.
 </p>
 
 <p>
@@ -704,6 +715,7 @@
 
 <p>
   Make can create zip files containing all the files that are included in a release.
+  Zip files are written to the <code>_build/release</code> directory.
 </p>
 
 <h4>
@@ -723,13 +735,17 @@
 <pre class="cmd"><span class="prompt">&gt;</span> Make release</pre>
 
 <p>
-  By default the release file is named <code>dd-codesnip.zip</code>. You can
+  By default the release file is named <code>codesnip-exe.zip</code>. You can
   change this name by defining the <code>RELEASEFILENAME</code> macro or
   enviroment variable. For example, you can name the file
   <code>MyRelease.zip</code> by doing:
 </p>
 
-<pre class="cmd"><span class="prompt">&gt;</span> Make -DRELEASEFILENAME=MyRelease.zip release</pre>
+<pre class="cmd"><span class="prompt">&gt;</span> Make -DRELEASEFILENAME=MyRelease release</pre>
+
+<p>
+  Note that the <code>.zip</code> extension should not be included in the file name.
+</p>
 
 <h4>
   Portable edition
@@ -754,7 +770,11 @@
   <code>MyPortableRelease.zip</code> by doing:
 </p>
 
-<pre class="cmd"><span class="prompt">&gt;</span> Make -DPORTABLE -DRELEASEFILENAME=MyPortableRelease.zip release</pre>
+<pre class="cmd"><span class="prompt">&gt;</span> Make -DPORTABLE -DRELEASEFILENAME=MyPortableRelease release</pre>
+
+<p>
+  Once again note that the <code>.zip</code> extension should not be included in the file name.
+</p>
 
 <p class="note">
   <strong>Warning:</strong> If you are building both the standard and portable
@@ -763,6 +783,35 @@
   built release will overwrite the first.
 </p>
 
+<h4>
+  Including version numbers in zip file names
+</h4>
+
+<p>
+  A version number can be suffixed to the release zip file name by defining the <code>VERSION</code> macro.
+  This macro works with both the <code>PORTABLE</code> and <code>RELEASEFILENAME</code> macros.
+</p>
+
+<p>
+  For example to appended version number 4.22.0 to the zip file name on a standard edition build, with the default
+  file name do:
+</p>
+
+<pre class="cmd"><span class="prompt">&gt;</span> Make -DVERSION=4.22.0 release</pre>
+
+<p>
+  This will create a zip file named <code>codesnip-exe-4.22.0.zip</code>.
+</p>
+
+<p>
+  A more complex example would be to append the same version number to a portable edition build named <code>MyPortableRelease</code>. Do:
+</p>
+
+<pre class="cmd"><span class="prompt">&gt;</span> Make -DPORTABLE -DRELEASEFILENAME=MyPortableRelease -DVERSION=4.22.0 release</pre>
+
+<p>
+  This time the resulting zip file will be named <code>MyPortableRelease-4.22.0.zip</code>.
+</p>
 
 <h3>
   Build and Release Everything
@@ -784,15 +833,16 @@
 <span class="prompt">&gt;</span> Make setup
 <span class="prompt">&gt;</span> Make release</pre>
 
-<h4>
-  Portable edition
-</h4>
-
 <p>
   To perform a complete build of the portable edition of <em>CodeSnip</em> do
 </p>
 
 <pre class="cmd"><span class="prompt">&gt;</span> Make -DPORTABLE</pre>
+
+<p>
+  Note that the <code>RELEASEFILENAME</code> and <code>VERSION</code> macros that can be used for customising
+  zip file names can be used here too.
+</p>
 
 <h3>
   Clean Up
@@ -820,14 +870,14 @@
 </p>
 
 <p>
-  To compile the tests, open the <code>.\Src\CodeSnip.groupproj</code> group
+  To compile the tests, open the <code>Src\CodeSnip.groupproj</code> group
   project file in the Delphi XE IDE. Now select the <em>CodeSnipTests.exe</em>
   target in the project manager and compile.
 </p>
 
 <p>
   If they were not already present <code>Bin</code> and <code>Exe</code>
-  sub-directories will have been created in the <code>.\Tests</code> directory.
+  sub-directories will have been created in the <code>Tests</code> directory.
   The <code>Exe</code> directory contains the <em>DUnit</em> test program while
   <code>Bin</code> contains intermediate binaries.
 </p>
@@ -835,7 +885,7 @@
 <p>
   You can compile the tests as either a GUI application (default) or as a
   console application. For details please see the comments in
-  <code>.\Tests\Src\DUnit\CodeSnipTests.dpr</code>.
+  <code>Tests\Src\DUnit\CodeSnipTests.dpr</code>.
 </p>
 
 <h2>
@@ -850,6 +900,67 @@
   third party source code and image files. For full details of all applicable
   licenses please read <code>License.html</code> in the <code>Docs</code>
   directory.
+</p>
+
+<h2 id="conditions">
+  Conditions For Release of Modified Code
+</h2>
+
+<p>
+  If you are intending to release your own application based on the <em>CodeSnip</em> source code you <strong>must</strong> <em>either</em> change the source code as described below <em>or</em> seek written permission to use the DelphiDabbler CodeSnip branding. To seek such permission please use the <em>CodeSnip</em> <a href="https://github.com/delphidabbler/codesnip/issues">Issue Tracker</a> on GitHub.
+</p>
+
+<h3>
+  Required Changes
+</h3>
+
+<p>
+  The changes are required to remove DelphiDabbler CodeSnip copyrighted branding from the program, to prevent interference with existing CodeSnip installations and to remove any implied endorsement of the modified release. You <strong>must</strong>:
+</p>
+
+<ol>
+  <li>
+    <p>
+      Replace the files in the <code>Src\Res\Img\Branding</code> directory with copies of the identically named placeholder files in the <code>Src\Res\Img\AltBranding</code> directory. The placeholder files are Public Domain, so you may use them as-is, edit them or replace them. If you delete the files in <code>Src\Res\Img\Branding</code> without copying the placeholder files across then <em>CodeSnip</em> will fail to build.
+    </p>
+  </li>
+  <li>
+    <p>
+      Replace all relevant references, in source code and documentation, to the names &quot;CodeSnip&quot; and &quot;DelphiDabbler&quot; with your own company and program name. Relevant occurences are:
+    </p>
+    <ul>
+      <li>
+        Wherever the names may be displayed in the GUI.
+      </li>
+      <li>
+        Wherever the names may be displayed by the installer.
+      </li>
+      <li>
+        Wherever the names occur in directory names. In particular do not use the names in the program's <code>%ProgramData%</code> and <code>%AppData%</code> sub-directories.
+      </li>
+      <li>
+        Anywhere else that use of the names could imply endorsement of the modified code.
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>
+      Provide your own license file with content compatible with the requirements of the <em>CodeSnip</em> license as it relates to the code reused from the <em>CodeSnip</em> source tree. <strong>Do not</strong> edit or re-use <code>Docs/License.html</code>.
+    </p>
+  </li>
+  <li>
+    <p>
+      Modify source code and documentation where necessary to acknowledge the origins of the program's source code, documentation and images, in accordance with the <em>CodeSnip</em> license.
+    </p>
+  </li>
+</ol>
+
+<p>
+  Note that the <em>CodeSnip</em> license can be found in <code>Docs\License.html</code>.
+</p>
+
+<p>
+  If you are unsure about whether your changes meet the license requirements then you can seek clarification by creating an issue on the aforementioned <a href="https://github.com/delphidabbler/codesnip/issues">Issue Tracker</a>.
 </p>
 
 </body>
